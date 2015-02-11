@@ -97,6 +97,9 @@ class PhoneRTCPlugin : CDVPlugin {
     func setVideoView(command: CDVInvokedUrlCommand) {
         let config: AnyObject = command.argumentAtIndex(0)
 
+        // for logging
+        let sessionKey = command.argumentAtIndex(0) as? String
+
         dispatch_async(dispatch_get_main_queue()) {
             // create session config from the JS params
             let videoConfig = VideoConfig(data: config)
@@ -114,7 +117,7 @@ class PhoneRTCPlugin : CDVPlugin {
                     self.initLocalVideoTrack()
 
                     // logging start
-                        self.logEvent("phonertc.setVideoView", logMessage: "initing LocalVideoTrack", logData: "")
+                    self.logEvent( sessionKey!, context: "phonertc.setVideoView", logMessage: "initing LocalVideoTrack", logData: "")
                     // logging end
                 }
 
@@ -127,7 +130,7 @@ class PhoneRTCPlugin : CDVPlugin {
                         self.localVideoView = nil
 
                         // logging start
-                          self.logEvent("phonertc.setVideoView", logMessage: "localVideo exists already, removing localVideoView", logData: "")
+                        self.logEvent( sessionKey!, context:"phonertc.setVideoView", logMessage: "localVideo exists already, removing localVideoView", logData: "")
                         // logging end
                     }
                 } else {
@@ -144,7 +147,7 @@ class PhoneRTCPlugin : CDVPlugin {
                         )
 
                         // logging start
-                            self.logEvent("phonertc.setVideoView", logMessage: "localVideoView exists, setting frame", logData: self.localVideoView!)
+                        self.logEvent( sessionKey!, context:"phonertc.setVideoView", logMessage: "localVideoView exists, setting frame", logData: self.localVideoView!)
                         // logging end
 
                     } else {
@@ -153,7 +156,7 @@ class PhoneRTCPlugin : CDVPlugin {
                         self.localVideoTrack!.addRenderer(self.localVideoView!)
 
                         // logging start
-                          self.logEvent("phonertc.setVideoView", logMessage: "localVideoView does not exist, creating and rendering", logData: self.localVideoView!)
+                        self.logEvent( sessionKey!, context:"phonertc.setVideoView", logMessage: "localVideoView does not exist, creating and rendering", logData: self.localVideoView!)
                         // logging end
                     }
                 }
@@ -257,11 +260,6 @@ class PhoneRTCPlugin : CDVPlugin {
 
     func addRemoteVideoTrack(videoTrack: RTCVideoTrack) {
         if self.videoConfig == nil {
-
-            // logging start
-              self.logEvent("phonertc.addRemoteVideoTrack", logMessage: "videoconfig is nil, returning", logData: "")
-            // logging ended
-        
             return
         }
 
@@ -338,16 +336,16 @@ class PhoneRTCPlugin : CDVPlugin {
         var y = getCenter(actualRows,
             videoSize: videoSize,
             containerSize: self.videoConfig!.container.height)
-                + self.videoConfig!.container.y
+            + self.videoConfig!.container.y
 
         var videoViewIndex = 0
 
         for var row = 0; row < rows && videoViewIndex < n; row++ {
             var x = getCenter(row < row - 1 || n % rows == 0 ?
-                                videosInRow : n - (min(n, videoViewIndex + videosInRow) - 1),
+                videosInRow : n - (min(n, videoViewIndex + videosInRow) - 1),
                 videoSize: videoSize,
                 containerSize: self.videoConfig!.container.width)
-                    + self.videoConfig!.container.x
+                + self.videoConfig!.container.x
 
             var startIndex = 0
             if n > 1 {
@@ -372,11 +370,6 @@ class PhoneRTCPlugin : CDVPlugin {
                 )
 
                 x += Int(videoSize)
-
-                // logging start
-                    var logMessage = "refreshing video container - setting remote view, remoteVideoView count: \(n)"
-                    self.logEvent("phonertc.refreshVideoContainer", logMessage: logMessage , logData: "")
-                // logging end
             }
 
             y += Int(videoSize)
@@ -409,9 +402,9 @@ class PhoneRTCPlugin : CDVPlugin {
     }
 
     // Custom logging function
-    func logEvent ( context: NSString, logMessage : NSString , logData: AnyObject) {
-        var js = "cordova.plugins.phonertc.logEvent('" + logMessage + "');"
-        self.commandDelegate.evalJs(js);
+    func logEvent ( sessionKey:NSString, context: NSString, logMessage : NSString , logData: AnyObject) {
+        var js = "cordova.plugins.phonertc.logEvent('" + sessionKey + "' , '" + context + "' , '" + logMessage + "');"
+        self.commandDelegate.evalJs(js)
     }
 
 }

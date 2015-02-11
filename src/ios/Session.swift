@@ -14,30 +14,30 @@ class Session {
     var sessionKey: String
 
     init(plugin: PhoneRTCPlugin,
-         peerConnectionFactory: RTCPeerConnectionFactory,
-         config: SessionConfig,
-         callbackId: String,
-         sessionKey: String) {
-        self.plugin = plugin
-        self.queuedRemoteCandidates = []
-        self.config = config
-        self.peerConnectionFactory = peerConnectionFactory
-        self.callbackId = callbackId
-        self.sessionKey = sessionKey
+        peerConnectionFactory: RTCPeerConnectionFactory,
+        config: SessionConfig,
+        callbackId: String,
+        sessionKey: String) {
+            self.plugin = plugin
+            self.queuedRemoteCandidates = []
+            self.config = config
+            self.peerConnectionFactory = peerConnectionFactory
+            self.callbackId = callbackId
+            self.sessionKey = sessionKey
 
-        // initialize basic media constraints
-        self.constraints = RTCMediaConstraints(
-            mandatoryConstraints: [
-                RTCPair(key: "OfferToReceiveAudio", value: "true"),
-                RTCPair(key: "OfferToReceiveVideo", value:
-                    self.plugin.videoConfig == nil ? "false" : "true"),
-            ],
+            // initialize basic media constraints
+            self.constraints = RTCMediaConstraints(
+                mandatoryConstraints: [
+                    RTCPair(key: "OfferToReceiveAudio", value: "true"),
+                    RTCPair(key: "OfferToReceiveVideo", value:
+                        self.plugin.videoConfig == nil ? "false" : "true"),
+                ],
 
-            optionalConstraints: [
-                RTCPair(key: "internalSctpDataChannels", value: "true"),
-                RTCPair(key: "DtlsSrtpKeyAgreement", value: "true")
-            ]
-        )
+                optionalConstraints: [
+                    RTCPair(key: "internalSctpDataChannels", value: "true"),
+                    RTCPair(key: "DtlsSrtpKeyAgreement", value: "true")
+                ]
+            )
     }
 
     func call() {
@@ -129,16 +129,16 @@ class Session {
                         self.peerConnection.addICECandidate(candidate)
                     }
 
-                    case "offer", "answer":
-                        if let sdpString = object.objectForKey("sdp") as? String {
-                            let sdp = RTCSessionDescription(type: type, sdp: self.preferISAC(sdpString))
-                            self.peerConnection.setRemoteDescriptionWithDelegate(SessionDescriptionDelegate(session: self),
-                                                                                 sessionDescription: sdp)
-                        }
-                    case "bye":
-                        self.disconnect(false)
-                    default:
-                        println("Invalid message \(message)")
+                case "offer", "answer":
+                    if let sdpString = object.objectForKey("sdp") as? String {
+                        let sdp = RTCSessionDescription(type: type, sdp: self.preferISAC(sdpString))
+                        self.peerConnection.setRemoteDescriptionWithDelegate(SessionDescriptionDelegate(session: self),
+                            sessionDescription: sdp)
+                    }
+                case "bye":
+                    self.disconnect(false)
+                default:
+                    println("Invalid message \(message)")
                 }
             }
         } else {
@@ -147,8 +147,8 @@ class Session {
                 println("There was an error parsing the client message: \(parseError.localizedDescription)")
 
                 // logging start
-                  var logMessage = "logEvent('There was an error parsing the client message: \(parseError.localizedDescription)')"
-                  self.plugin.logEvent("phonertc.receiveMessage", logMessage: logMessage, logData: "")
+                var logMessage = "logEvent('There was an error parsing the client message: \(parseError.localizedDescription)')"
+                self.plugin.logEvent(self.sessionKey, context: "phonertc.receiveMessage", logMessage: logMessage, logData: "")
                 // end logging
             }
             // If there is no data then exit.
@@ -215,13 +215,13 @@ class Session {
         for var i = 0;
             (i < lines.count) && (mLineIndex == -1 || isac16kRtpMap == nil);
             ++i {
-            let line = lines[i]
-            if line.hasPrefix("m=audio ") {
-                mLineIndex = i
-                continue
-            }
+                let line = lines[i]
+                if line.hasPrefix("m=audio ") {
+                    mLineIndex = i
+                    continue
+                }
 
-            isac16kRtpMap = self.firstMatch(isac16kRegex!, string: line)
+                isac16kRtpMap = self.firstMatch(isac16kRegex!, string: line)
         }
 
         if mLineIndex == -1 {
