@@ -112,6 +112,10 @@ class PhoneRTCPlugin : CDVPlugin {
             if self.videoConfig!.local != nil {
                 if self.localVideoTrack == nil {
                     self.initLocalVideoTrack()
+
+                    // logging start
+                        self.logEvent("phonertc.setVideoView", logMessage: "initing LocalVideoTrack", logData: "")
+                    // logging end
                 }
 
                 if self.videoConfig!.local == nil {
@@ -121,6 +125,10 @@ class PhoneRTCPlugin : CDVPlugin {
                         self.localVideoView!.hidden = true
                         self.localVideoView!.removeFromSuperview()
                         self.localVideoView = nil
+
+                        // logging start
+                          self.logEvent("phonertc.setVideoView", logMessage: "localVideo exists already, removing localVideoView", logData: "")
+                        // logging end
                     }
                 } else {
                     let params = self.videoConfig!.local!
@@ -134,10 +142,19 @@ class PhoneRTCPlugin : CDVPlugin {
                             CGFloat(params.width),
                             CGFloat(params.height)
                         )
+
+                        // logging start
+                            self.logEvent("phonertc.setVideoView", logMessage: "localVideoView exists, setting frame", logData: self.localVideoView!)
+                        // logging end
+
                     } else {
                         // otherwise, create the local video view
                         self.localVideoView = self.createVideoView(params: params)
                         self.localVideoTrack!.addRenderer(self.localVideoView!)
+
+                        // logging start
+                          self.logEvent("phonertc.setVideoView", logMessage: "localVideoView does not exist, creating and rendering", logData: self.localVideoView!)
+                        // logging end
                     }
                 }
 
@@ -177,10 +194,10 @@ class PhoneRTCPlugin : CDVPlugin {
                 self.localVideoView = nil
             }
         }
-        
+
         self.localVideoTrack = nil
         self.localAudioTrack = nil
-        
+
         self.videoSource = nil
         self.videoCapturer = nil
     }
@@ -216,13 +233,13 @@ class PhoneRTCPlugin : CDVPlugin {
     func initLocalVideoTrack() {
         var cameraID: String?
         var position: AVCaptureDevicePosition = AVCaptureDevicePosition.Front
-        
+
         if (self.videoConfig?.rearFacingCamera == true) {
             position = AVCaptureDevicePosition.Back
         }
-        
+
         for captureDevice in AVCaptureDevice.devicesWithMediaType(AVMediaTypeVideo) {
-            
+
             if captureDevice.position == position {
                 cameraID = captureDevice.localizedName
             }
@@ -240,6 +257,11 @@ class PhoneRTCPlugin : CDVPlugin {
 
     func addRemoteVideoTrack(videoTrack: RTCVideoTrack) {
         if self.videoConfig == nil {
+
+            // logging start
+              self.logEvent("phonertc.addRemoteVideoTrack", logMessage: "videoconfig is nil, returning", logData: "")
+            // logging ended
+        
             return
         }
 
@@ -350,6 +372,11 @@ class PhoneRTCPlugin : CDVPlugin {
                 )
 
                 x += Int(videoSize)
+
+                // logging start
+                    var logMessage = "refreshing video container - setting remote view, remoteVideoView count: \(n)"
+                    self.logEvent("phonertc.refreshVideoContainer", logMessage: logMessage , logData: "")
+                // logging end
             }
 
             y += Int(videoSize)
@@ -380,6 +407,13 @@ class PhoneRTCPlugin : CDVPlugin {
             self.videoCapturer = nil
         }
     }
+
+    // Custom logging function
+    func logEvent ( context: NSString, logMessage : NSString , logData: AnyObject) {
+        var js = "cordova.plugins.phonertc.logEvent('" + logMessage + "');"
+        self.commandDelegate.evalJs(js);
+    }
+
 }
 
 struct VideoTrackViewPair {
