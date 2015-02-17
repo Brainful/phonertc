@@ -42,6 +42,9 @@ class PhoneRTCPlugin : CDVPlugin {
                     session.call()
                 }
             }
+
+            //az AudioSession Override
+            self.setupAudioSession()
         }
     }
 
@@ -177,10 +180,10 @@ class PhoneRTCPlugin : CDVPlugin {
                 self.localVideoView = nil
             }
         }
-        
+
         self.localVideoTrack = nil
         self.localAudioTrack = nil
-        
+
         self.videoSource = nil
         self.videoCapturer = nil
     }
@@ -216,13 +219,13 @@ class PhoneRTCPlugin : CDVPlugin {
     func initLocalVideoTrack() {
         var cameraID: String?
         var position: AVCaptureDevicePosition = AVCaptureDevicePosition.Front
-        
+
         if (self.videoConfig?.rearFacingCamera == true) {
             position = AVCaptureDevicePosition.Back
         }
-        
+
         for captureDevice in AVCaptureDevice.devicesWithMediaType(AVMediaTypeVideo) {
-            
+
             if captureDevice.position == position {
                 cameraID = captureDevice.localizedName
             }
@@ -379,6 +382,50 @@ class PhoneRTCPlugin : CDVPlugin {
             self.videoSource = nil
             self.videoCapturer = nil
         }
+    }
+
+    func setupAudioSession () {
+        //  az added to override any audio conflict from other plugins
+        /*
+            https://developer.apple.com/library/ios/documentation/Audio/Conceptual/AudioSessionProgrammingGuide/AudioSessionBasics/AudioSessionBasics.html#//apple_ref/doc/uid/TP40007875-CH3-SW1
+        */
+
+        println("Setting up audio session")
+
+        var error : NSError?;
+        let auSession = AVAudioSession.sharedInstance()
+
+        // Audio will play even if phone is set on silent, and is non mixable with other sounds. Will interrupt existing on going audio
+        auSession.setCategory(AVAudioSessionCategoryPlayAndRecord, withOptions: AVAudioSessionCategoryOptions.DefaultToSpeaker, error: &error)
+        if error != nil {
+            println("Error when setting up audio session")
+            println(error)
+        }
+
+        //  Signals are optimized for voice through system-supplied signal processing and sets AVAudioSessionCategoryOptionAllowBluetooth and AVAudioSessionCategoryOptionDefaultToSpeaker.
+        auSession.setMode(AVAudioSessionModeVoiceChat, error: &error)
+        if error != nil {
+            println("Error when setting up audio session")
+            println(error)
+        }
+
+
+        //  Tell other audio units to resume playing audio if they were interrupted with this call
+        auSession.setActive(true, withOptions: AVAudioSessionSetActiveOptions.OptionNotifyOthersOnDeactivation, error: &error)
+        if error != nil {
+            println("Error when setting up audio session")
+            println(error)
+        }
+
+        //  Lets route to speaker
+        auSession.overrideOutputAudioPort(AVAudioSessionPortOverride.Speaker, error: &error)
+        if error != nil {
+            println("Error when setting up audio session")
+            println(error)
+        } else {
+            println("We are on speaker!")
+        }
+
     }
 }
 
