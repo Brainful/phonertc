@@ -42,9 +42,6 @@ class PhoneRTCPlugin : CDVPlugin {
                     session.call()
                 }
             }
-
-            //az AudioSession Override
-            self.setupAudioSession()
         }
     }
 
@@ -214,6 +211,8 @@ class PhoneRTCPlugin : CDVPlugin {
 
     func initLocalAudioTrack() {
         localAudioTrack = peerConnectionFactory.audioTrackWithID("ARDAMSa0")
+        //az AudioSession Override
+        self.setupAudioSession()
     }
 
     func initLocalVideoTrack() {
@@ -394,7 +393,9 @@ class PhoneRTCPlugin : CDVPlugin {
 
         var error : NSError?;
         let auSession = AVAudioSession.sharedInstance()
-
+        
+        println("Current audioRoute : \(auSession.currentRoute)")
+        
         // Audio will play even if phone is set on silent, and is non mixable with other sounds. Will interrupt existing on going audio
         auSession.setCategory(AVAudioSessionCategoryPlayAndRecord, withOptions: AVAudioSessionCategoryOptions.DefaultToSpeaker, error: &error)
         if error != nil {
