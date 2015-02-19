@@ -43,7 +43,9 @@ class PCObserver : NSObject, RTCPeerConnectionDelegate {
           println("\(NSDate()): PCO onIceConnectionChange. \(newState) : \(newState.value)")
           if(newState.value == 2) {
               self.session.sendMessage("{\"type\": \"__connected\"}".dataUsingEncoding(NSUTF8StringEncoding)!);
-              self.session.plugin.onSessionConnected()
+              dispatch_async(dispatch_get_main_queue()) {
+                self.session.plugin.onSessionConnected()
+              }
           }
     }
 
