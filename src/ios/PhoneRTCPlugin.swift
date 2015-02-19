@@ -128,12 +128,16 @@ class PhoneRTCPlugin : CDVPlugin {
                     // if the local video view already exists, just
                     // change its position according to the new config.
                     if self.localVideoView != nil {
+
+                        // Lets handle the resize on "connected" event
+                        /*
                         self.localVideoView!.frame = CGRectMake(
                             CGFloat(params.x + self.videoConfig!.container.x),
                             CGFloat(params.y + self.videoConfig!.container.y),
                             CGFloat(params.width),
                             CGFloat(params.height)
                         )
+                        */
                     } else {
                         // otherwise, create the local video view
                         self.localVideoView = self.createVideoView(params: params)
@@ -290,19 +294,7 @@ class PhoneRTCPlugin : CDVPlugin {
             return
 
         } else {
-
-            let params = self.videoConfig!.local!
-
-            // if the local video view already exists, just
-            // change its position according to the new config.
-            if self.localVideoView != nil {
-                self.localVideoView!.frame = CGRectMake(
-                    CGFloat(params.x + self.videoConfig!.container.x),
-                    CGFloat(params.y + self.videoConfig!.container.y),
-                    CGFloat(params.width),
-                    CGFloat(params.height)
-                )
-            }
+          //az - do nothing, handle resize onSessionConnect()
         }
 
         if n > 1 {
@@ -383,6 +375,67 @@ class PhoneRTCPlugin : CDVPlugin {
         }
     }
 
+    func onSessionConnected() {
+      println("Calling onSessionConnected")
+        let params = self.videoConfig!.local!
+
+        if ( self.localVideoView != nil && self.videoConfig!.isSafetyCam == false ) {
+
+            println("resizing")
+            self.localVideoView?.layer.borderColor = UIColor.whiteColor().CGColor
+            self.localVideoView?.layer.borderWidth = 1.0
+
+            self.resizeLocalVideoView("thumb")
+        }
+        if self.localVideoView != nil {
+            self.webView.bringSubviewToFront(self.localVideoView!)
+        }
+    }
+
+    func resizeLocalVideoView(toSize:NSString) {
+        switch(toSize) {
+        case "large" :
+            println("resizing to large")
+
+            let currentFrame = self.localVideoView!.frame
+
+            if (currentFrame.width == CGFloat(self.videoConfig!.container.width)) {
+                return
+            }
+
+            let translate = CGAffineTransformMakeTranslation (0 , 0)
+            let scale  = CGAffineTransformMakeScale(CGFloat(self.videoConfig!.container.width)/currentFrame.width , CGFloat(self.videoConfig!.container.height)/currentFrame.height)
+
+            UIView.animateWithDuration(0.5, animations: { () -> Void in
+                self.localVideoView?.transform = CGAffineTransformConcat(scale, translate)
+                return
+            })
+
+
+        case "thumb" :
+            println("resizing to thumb")
+
+            let params = self.videoConfig!.local!
+
+            let currentFrame = self.localVideoView!.frame
+            if (currentFrame.width == CGFloat(params.width)) {
+                return
+            }
+            let translate = CGAffineTransformMakeTranslation (0 - CGFloat((self.videoConfig!.container.width - params.width)/2) + CGFloat(params.x) , 0 - CGFloat((self.videoConfig!.container.height - params.height)/2) + CGFloat(params.y))
+            let scale  = CGAffineTransformMakeScale(CGFloat(params.width)/currentFrame.width , CGFloat(params.height)/currentFrame.height)
+
+
+            UIView.animateWithDuration(0.5, animations: { () -> Void in
+                self.localVideoView?.transform = CGAffineTransformConcat(scale, translate)
+                return
+            })
+
+
+        default:
+            println("do nothing")
+        }
+    }
+
     func setupAudioSession () {
         //  az added to override any audio conflict from other plugins
         /*
@@ -393,9 +446,9 @@ class PhoneRTCPlugin : CDVPlugin {
 
         var error : NSError?;
         let auSession = AVAudioSession.sharedInstance()
-        
+
         println("Current audioRoute : \(auSession.currentRoute)")
-        
+
         // Audio will play even if phone is set on silent, and is non mixable with other sounds. Will interrupt existing on going audio
         auSession.setCategory(AVAudioSessionCategoryPlayAndRecord, withOptions: AVAudioSessionCategoryOptions.DefaultToSpeaker, error: &error)
         if error != nil {
