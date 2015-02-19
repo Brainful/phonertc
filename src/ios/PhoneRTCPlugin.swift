@@ -294,26 +294,9 @@ class PhoneRTCPlugin : CDVPlugin {
             }
             return
 
+        } else {
+          //az - do nothing, handle resize onSessionConnect()
         }
-
-        //Let us handle this at "connected" event
-        /*
-        else {
-
-            let params = self.videoConfig!.local!
-
-            // if the local video view already exists, just
-            // change its position according to the new config.
-            if self.localVideoView != nil {
-                self.localVideoView!.frame = CGRectMake(
-                    CGFloat(params.x + self.videoConfig!.container.x),
-                    CGFloat(params.y + self.videoConfig!.container.y),
-                    CGFloat(params.width),
-                    CGFloat(params.height)
-                )
-            }
-        }
-        */
 
         if n > 1 {
             n = n - 1
@@ -394,7 +377,64 @@ class PhoneRTCPlugin : CDVPlugin {
     }
 
     func onSessionConnected() {
-      self.refreshVideoContainer()
+      println("Calling onSessionConnected")
+        let params = self.videoConfig!.local!
+
+        if self.localVideoView != nil {
+
+            println("resizing")
+            self.localVideoView?.layer.borderColor = UIColor.whiteColor().CGColor
+            self.localVideoView?.layer.borderWidth = 1.0
+
+            self.resizeLocalVideoView("thumb")
+        }
+        if self.localVideoView != nil {
+            self.webView.bringSubviewToFront(self.localVideoView!)
+        }
+    }
+
+    func resizeLocalVideoView(toSize:NSString) {
+        switch(toSize) {
+        case "large" :
+            println("resizing to large")
+
+            let currentFrame = self.localVideoView!.frame
+
+            if (currentFrame.width == CGFloat(self.videoConfig!.container.width)) {
+                return
+            }
+
+            let translate = CGAffineTransformMakeTranslation (0 , 0)
+            let scale  = CGAffineTransformMakeScale(CGFloat(self.videoConfig!.container.width)/currentFrame.width , CGFloat(self.videoConfig!.container.height)/currentFrame.height)
+
+            UIView.animateWithDuration(0.5, animations: { () -> Void in
+                self.localVideoView?.transform = CGAffineTransformConcat(scale, translate)
+                return
+            })
+            
+
+        case "thumb" :
+            println("resizing to thumb")
+
+            let params = self.videoConfig!.local!
+
+            let currentFrame = self.localVideoView!.frame
+            if (currentFrame.width == CGFloat(params.width)) {
+                return
+            }
+            let translate = CGAffineTransformMakeTranslation (0 - CGFloat((self.videoConfig!.container.width - params.width)/2) + CGFloat(params.x) , 0 - CGFloat((self.videoConfig!.container.height - params.height)/2) + CGFloat(params.y))
+            let scale  = CGAffineTransformMakeScale(CGFloat(params.width)/currentFrame.width , CGFloat(params.height)/currentFrame.height)
+
+
+            UIView.animateWithDuration(0.5, animations: { () -> Void in
+                self.localVideoView?.transform = CGAffineTransformConcat(scale, translate)
+                return
+            })
+
+
+        default:
+            println("do nothing")
+        }
     }
 
     func setupAudioSession () {
