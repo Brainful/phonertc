@@ -380,7 +380,7 @@ class PhoneRTCPlugin : CDVPlugin {
       println("Calling onSessionConnected")
         let params = self.videoConfig!.local!
 
-        if self.localVideoView != nil {
+        if ( self.localVideoView != nil && self.videoConfig!.isSafetyCam == false ) {
 
             println("resizing")
             self.localVideoView?.layer.borderColor = UIColor.whiteColor().CGColor
@@ -411,7 +411,7 @@ class PhoneRTCPlugin : CDVPlugin {
                 self.localVideoView?.transform = CGAffineTransformConcat(scale, translate)
                 return
             })
-            
+
 
         case "thumb" :
             println("resizing to thumb")
