@@ -256,8 +256,7 @@ class PhoneRTCPlugin : CDVPlugin {
         videoTrack.addRenderer(videoView)
         self.remoteVideoViews.append(VideoTrackViewPair(videoView: videoView, videoTrack: videoTrack))
 
-        // Lets refresh video container at "connected event instead"!
-        //refreshVideoContainer()
+        refreshVideoContainer()
 
         if self.localVideoView != nil {
             self.webView.bringSubviewToFront(self.localVideoView!)
