@@ -128,12 +128,16 @@ class PhoneRTCPlugin : CDVPlugin {
                     // if the local video view already exists, just
                     // change its position according to the new config.
                     if self.localVideoView != nil {
+
+                        // Lets handle the resize on "connected" event
+                        /*
                         self.localVideoView!.frame = CGRectMake(
                             CGFloat(params.x + self.videoConfig!.container.x),
                             CGFloat(params.y + self.videoConfig!.container.y),
                             CGFloat(params.width),
                             CGFloat(params.height)
                         )
+                        */
                     } else {
                         // otherwise, create the local video view
                         self.localVideoView = self.createVideoView(params: params)
@@ -252,7 +256,8 @@ class PhoneRTCPlugin : CDVPlugin {
         videoTrack.addRenderer(videoView)
         self.remoteVideoViews.append(VideoTrackViewPair(videoView: videoView, videoTrack: videoTrack))
 
-        refreshVideoContainer()
+        // Lets refresh video container at "connected event instead"!
+        //refreshVideoContainer()
 
         if self.localVideoView != nil {
             self.webView.bringSubviewToFront(self.localVideoView!)
@@ -289,7 +294,11 @@ class PhoneRTCPlugin : CDVPlugin {
             }
             return
 
-        } else {
+        }
+
+        //Let us handle this at "connected" event
+        /*
+        else {
 
             let params = self.videoConfig!.local!
 
@@ -304,6 +313,7 @@ class PhoneRTCPlugin : CDVPlugin {
                 )
             }
         }
+        */
 
         if n > 1 {
             n = n - 1
@@ -383,6 +393,10 @@ class PhoneRTCPlugin : CDVPlugin {
         }
     }
 
+    func onSessionConnected() {
+      self.refreshVideoContainer()
+    }
+
     func setupAudioSession () {
         //  az added to override any audio conflict from other plugins
         /*
@@ -393,9 +407,9 @@ class PhoneRTCPlugin : CDVPlugin {
 
         var error : NSError?;
         let auSession = AVAudioSession.sharedInstance()
-        
+
         println("Current audioRoute : \(auSession.currentRoute)")
-        
+
         // Audio will play even if phone is set on silent, and is non mixable with other sounds. Will interrupt existing on going audio
         auSession.setCategory(AVAudioSessionCategoryPlayAndRecord, withOptions: AVAudioSessionCategoryOptions.DefaultToSpeaker, error: &error)
         if error != nil {
