@@ -101,12 +101,12 @@ class PhoneRTCPlugin : CDVPlugin {
             // create session config from the JS params
             let videoConfig = VideoConfig(data: config)
 
+            self.videoConfig = videoConfig
+
             // make sure that it's not junk
             if videoConfig.container.width == 0 || videoConfig.container.height == 0 {
                 return
             }
-
-            self.videoConfig = videoConfig
 
             // add local video view
             if self.videoConfig!.local != nil {
@@ -376,7 +376,12 @@ class PhoneRTCPlugin : CDVPlugin {
     }
 
     func onSessionConnected() {
-      println("Calling onSessionConnected")
+        println("Calling onSessionConnected")
+
+        if (self.videoConfig?.isAudioCall != false) {
+            return
+        }
+
         let params = self.videoConfig!.local!
 
         if ( self.localVideoView != nil && self.videoConfig!.isSafetyCam == false ) {
