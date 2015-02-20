@@ -39,6 +39,7 @@ class VideoConfig {
     var local: VideoLayoutParams?
     var isSafetyCam: Bool
     var rearFacingCamera: Bool
+    var isAudioCall: Bool
 
     init(data: AnyObject) {
         let containerParams: AnyObject = data.objectForKey("containerParams")!
