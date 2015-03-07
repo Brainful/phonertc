@@ -19,6 +19,8 @@ class PhoneRTCPlugin : CDVPlugin {
         peerConnectionFactory = RTCPeerConnectionFactory()
         RTCPeerConnectionFactory.initializeSSL()
         super.init(webView: webView)
+
+        NSNotificationCenter.defaultCenter().addObserver( self, selector: "audioRouteDidChange:", name: AVAudioSessionRouteChangeNotification, object: nil)
     }
 
     func createSessionObject(command: CDVInvokedUrlCommand) {
@@ -485,6 +487,39 @@ class PhoneRTCPlugin : CDVPlugin {
             println("We are on speaker!")
         }
 
+    }
+
+    func audioRouteDidChange(notification: NSNotification) {
+        var interuptionDict:NSDictionary = notification.userInfo!
+        var routeChangeReason: NSInteger = interuptionDict.valueForKey(AVAudioSessionRouteChangeReasonKey)!.integerValue
+
+        switch (routeChangeReason) {
+        case AVAudioSessionRouteChangeReason.CategoryChange.hashValue:
+            // Set speaker as default route
+            var error : NSError?;
+            let auSession = AVAudioSession.sharedInstance()
+            println("change audioRoute before: \(auSession.currentRoute)")
+
+            if ( auSession.currentRoute == AVAudioSessionPortHeadphones) {
+                println("Switched to headphone, no need to override to speaker")
+                return
+            }
+
+            auSession.overrideOutputAudioPort(AVAudioSessionPortOverride.Speaker, error: &error)
+            if error != nil {
+                println("Error when setting up audio session")
+                println(error)
+            } else {
+                println("We are on speaker again!")
+
+                println("change audioRoute before: \(auSession.currentRoute)")
+            }
+
+            break
+
+        default:
+            break
+        }
     }
 }
 
