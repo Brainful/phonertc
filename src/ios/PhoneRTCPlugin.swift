@@ -456,6 +456,11 @@ class PhoneRTCPlugin : CDVPlugin {
 
         println("Current audioRoute : \(auSession.currentRoute)")
 
+        if self.isHeadphonePluggedIn() {
+            println("setupAudioSession: On headphone, no need to override to speaker")
+            return
+        }
+
         // Audio will play even if phone is set on silent, and is non mixable with other sounds. Will interrupt existing on going audio
         auSession.setCategory(AVAudioSessionCategoryPlayAndRecord, withOptions: AVAudioSessionCategoryOptions.DefaultToSpeaker, error: &error)
         if error != nil {
@@ -493,15 +498,17 @@ class PhoneRTCPlugin : CDVPlugin {
         var interuptionDict:NSDictionary = notification.userInfo!
         var routeChangeReason: NSInteger = interuptionDict.valueForKey(AVAudioSessionRouteChangeReasonKey)!.integerValue
 
+        var error : NSError?;
+        let auSession = AVAudioSession.sharedInstance()
+
         switch (routeChangeReason) {
         case AVAudioSessionRouteChangeReason.CategoryChange.hashValue:
             // Set speaker as default route
-            var error : NSError?;
-            let auSession = AVAudioSession.sharedInstance()
+
             println("change audioRoute before: \(auSession.currentRoute)")
 
-            if ( auSession.currentRoute == AVAudioSessionPortHeadphones) {
-                println("Switched to headphone, no need to override to speaker")
+            if self.isHeadphonePluggedIn() {
+                println("On headphone, no need to override to speaker")
                 return
             }
 
@@ -512,14 +519,43 @@ class PhoneRTCPlugin : CDVPlugin {
             } else {
                 println("We are on speaker again!")
 
-                println("change audioRoute before: \(auSession.currentRoute)")
+                println("change audioRoute after: \(auSession.currentRoute)")
             }
 
             break
 
+        case AVAudioSessionRouteChangeReason.NewDeviceAvailable.hashValue:
+            println("AVAudioSessionRouteChangeReasonNewDeviceAvailable");
+            println("Headphone/Line plugged in");
+            break;
+
+        case AVAudioSessionRouteChangeReason.OldDeviceUnavailable.hashValue:
+            println("AVAudioSessionRouteChangeReasonOldDeviceUnavailable");
+            println("Headphone/Line was pulled. switching to speaker....");
+
+            auSession.overrideOutputAudioPort(AVAudioSessionPortOverride.Speaker, error: &error)
+            if error != nil {
+                println("Error when setting up audio session")
+                println(error)
+            } else {
+                println("We are on speaker again!")
+                println("change audioRoute after: \(auSession.currentRoute)")
+            }
+            break;
+
         default:
             break
         }
+    }
+
+    func isHeadphonePluggedIn() -> Bool {
+        let auSession = AVAudioSession.sharedInstance()
+        for desc in auSession.currentRoute.outputs {
+            if desc.portType == AVAudioSessionPortHeadphones {
+                return true
+            }
+        }
+        return false
     }
 }
 
