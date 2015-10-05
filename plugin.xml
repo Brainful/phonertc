@@ -3,10 +3,6 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     id="com.dooble.phonertc"
     version="2.0.1">
-<<<<<<< HEAD
-=======
-
->>>>>>> fc7de00621383890f8aaaf87e3cf2a432ef59a7f
   <name>PhoneRTC</name>
   <description></description>
   <license></license>
