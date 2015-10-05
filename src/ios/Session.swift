@@ -158,7 +158,6 @@ class Session {
 
                 self.sendMessage(data!)
                 // logging end
-
             }
             // If there is no data then exit.
             return
