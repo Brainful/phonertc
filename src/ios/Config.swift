@@ -7,7 +7,7 @@ class SessionConfig {
 
     init(data: AnyObject) {
 
-        self.isInitiator = data.objectForKey("isInitiator") as Bool
+        self.isInitiator = data.objectForKey("isInitiator") as! Bool
 
         let turnObject: AnyObject = data.objectForKey("turn")!
         self.turn = TurnConfig(
@@ -45,9 +45,9 @@ class VideoConfig {
     init(data: AnyObject) {
         let containerParams: AnyObject = data.objectForKey("containerParams")!
         let localParams: AnyObject? = data.objectForKey("local")
-        self.isSafetyCam = data.objectForKey("isSafetyCam") as Bool
-        self.rearFacingCamera = data.objectForKey("rearFacingCamera") as Bool
-        self.isAudioCall = data.objectForKey("isAudioCall") as Bool
+        self.isSafetyCam = data.objectForKey("isSafetyCam") as! Bool
+        self.rearFacingCamera = data.objectForKey("rearFacingCamera") as! Bool
+        self.isAudioCall = data.objectForKey("isAudioCall") as! Bool
 
         self.container = VideoLayoutParams(data: containerParams)
 
@@ -68,12 +68,12 @@ class VideoLayoutParams {
     }
 
     init(data: AnyObject) {
-        let position: [AnyObject] = data.objectForKey("position")! as [AnyObject]
-        self.x = position[0] as Int
-        self.y = position[1] as Int
+        let position: [AnyObject] = data.objectForKey("position")! as! [AnyObject]
+        self.x = position[0] as! Int
+        self.y = position[1] as! Int
 
-        let size: [AnyObject] = data.objectForKey("size")! as [AnyObject]
-        self.width = size[0] as Int
-        self.height = size[1] as Int
+        let size: [AnyObject] = data.objectForKey("size")! as! [AnyObject]
+        self.width = size[0] as! Int
+        self.height = size[1] as! Int
     }
 }
