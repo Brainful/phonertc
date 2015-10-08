@@ -209,8 +209,9 @@ class PhoneRTCPlugin : CDVPlugin {
 
         view.userInteractionEnabled = false
 
-        self.webView.addSubview(view)
-        self.webView.bringSubviewToFront(view)
+        self.webView.insertSubview(view, atIndex: 1)
+        self.webView.opaque = false
+        self.webView.backgroundColor = UIColor.clearColor()
 
         return view
     }
