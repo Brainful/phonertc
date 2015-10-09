@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     id="com.dooble.phonertc"
     version="2.0.1">
+
   <name>PhoneRTC</name>
   <description></description>
   <license></license>
@@ -16,24 +17,22 @@
   </js-module>
 
   <platform name="ios">
+    <info>---------------------
+PhoneRTC Installation
+---------------------
 
-    <info>
-      ---------------------
-      PhoneRTC Installation
-      ---------------------
+In order to install PhoneRTC on iOS, please follow these steps:
 
-      In order to install PhoneRTC on iOS, please follow these steps:
-
-      1) Go platforms/ios and click on [ProjectName].xcodeproj to open it with XCode
-      2) Go to your project settings
-      3) In `General`, change `Deployment Target` to 7.0 or above
-      4) Go to `Build Settings` and change:
-            `Objective-C Bridging Header` =>
-                 [ProjectName]/Plugins/com.dooble.phonertc/Bridging-Header.h
-            `Runpath Search Paths` =>
-                 $(inherited) @executable_path/Frameworks
-      5) Go to `Build Phases` and unfold `Link Binary With Libraries`
-            `Add libicucore.dylib`
+1) Go platforms/ios and click on [ProjectName].xcodeproj to open it with XCode
+2) Go to your project settings
+3) In `General`, change `Deployment Target` to 7.0 or above
+4) Go to `Build Settings` and change:
+      `Objective-C Bridging Header` =>
+           [ProjectName]/Plugins/com.dooble.phonertc/Bridging-Header.h
+      `Runpath Search Paths` =>
+           $(inherited) @executable_path/Frameworks
+5) Go to `Build Phases` and unfold `Link Binary With Libraries`
+      `Add libicucore.dylib`
 
     </info>
 
