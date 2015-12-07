@@ -86,14 +86,13 @@ class PhoneRTCPlugin : CDVPlugin {
     }
 
     func sendMessage(callbackId: String, message: NSData) {
-        let json = NSJSONSerialization.JSONObjectWithData(message,
-            options: NSJSONReadingOptions.MutableLeaves,
-            error: nil) as! NSDictionary
+        let json = (try! NSJSONSerialization.JSONObjectWithData(message,
+            options: NSJSONReadingOptions.MutableLeaves)) as! NSDictionary
 
         let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAsDictionary: json as [NSObject : AnyObject])
         pluginResult.setKeepCallbackAsBool(true);
 
-        self.commandDelegate.sendPluginResult(pluginResult, callbackId:callbackId)
+        self.commandDelegate!.sendPluginResult(pluginResult, callbackId:callbackId)
     }
 
     func setVideoView(command: CDVInvokedUrlCommand) {
@@ -103,12 +102,12 @@ class PhoneRTCPlugin : CDVPlugin {
             // create session config from the JS params
             let videoConfig = VideoConfig(data: config)
 
-            self.videoConfig = videoConfig
-
             // make sure that it's not junk
             if videoConfig.container.width == 0 || videoConfig.container.height == 0 {
                 return
             }
+
+            self.videoConfig = videoConfig
 
             // add local video view
             if self.videoConfig!.local != nil {
@@ -142,7 +141,7 @@ class PhoneRTCPlugin : CDVPlugin {
                         */
                     } else {
                         // otherwise, create the local video view
-                        self.localVideoView = self.createVideoView(params: params)
+                        self.localVideoView = self.createVideoView(params)
                         self.localVideoTrack!.addRenderer(self.localVideoView!)
                     }
                 }
@@ -209,9 +208,9 @@ class PhoneRTCPlugin : CDVPlugin {
 
         view.userInteractionEnabled = false
 
-        self.webView.insertSubview(view, atIndex: 1)
-        self.webView.opaque = false
-        self.webView.backgroundColor = UIColor.clearColor()
+
+        self.webView!.addSubview(view)
+        self.webView!.bringSubviewToFront(view)
 
         return view
     }
@@ -231,8 +230,8 @@ class PhoneRTCPlugin : CDVPlugin {
         }
 
         for captureDevice in AVCaptureDevice.devicesWithMediaType(AVMediaTypeVideo) {
-
-            if captureDevice.position == position {
+            // TODO: Make this camera option configurable
+            if captureDevice.position == AVCaptureDevicePosition.Front {
                 cameraID = captureDevice.localizedName
             }
         }
@@ -262,7 +261,7 @@ class PhoneRTCPlugin : CDVPlugin {
         refreshVideoContainer()
 
         if self.localVideoView != nil {
-            self.webView.bringSubviewToFront(self.localVideoView!)
+            self.webView!.bringSubviewToFront(self.localVideoView!)
         }
     }
 
@@ -379,7 +378,7 @@ class PhoneRTCPlugin : CDVPlugin {
     }
 
     func onSessionConnected() {
-        println("Calling onSessionConnected")
+        print("Calling onSessionConnected")
 
         if (self.videoConfig?.isAudioCall != false) {
             return
@@ -389,21 +388,21 @@ class PhoneRTCPlugin : CDVPlugin {
 
         if ( self.localVideoView != nil && self.videoConfig!.isSafetyCam == false ) {
 
-            println("resizing")
+            print("resizing")
             self.localVideoView?.layer.borderColor = UIColor.whiteColor().CGColor
             self.localVideoView?.layer.borderWidth = 1.0
 
             self.resizeLocalVideoView("thumb")
         }
         if self.localVideoView != nil {
-            self.webView.bringSubviewToFront(self.localVideoView!)
+            self.webView!.bringSubviewToFront(self.localVideoView!)
         }
     }
 
     func resizeLocalVideoView(toSize:NSString) {
         switch(toSize) {
         case "large" :
-            println("resizing to large")
+            print("resizing to large")
 
             let currentFrame = self.localVideoView!.frame
 
@@ -421,7 +420,7 @@ class PhoneRTCPlugin : CDVPlugin {
 
 
         case "thumb" :
-            println("resizing to thumb")
+            print("resizing to thumb")
 
             let params = self.videoConfig!.local!
 
@@ -440,58 +439,11 @@ class PhoneRTCPlugin : CDVPlugin {
 
 
         default:
-            println("do nothing")
+            print("do nothing")
         }
     }
 
     func setupAudioSession () {
-        //  az added to override any audio conflict from other plugins
-        /*
-            https://developer.apple.com/library/ios/documentation/Audio/Conceptual/AudioSessionProgrammingGuide/AudioSessionBasics/AudioSessionBasics.html#//apple_ref/doc/uid/TP40007875-CH3-SW1
-        */
-
-        println("Setting up audio session")
-
-        var error : NSError?;
-        let auSession = AVAudioSession.sharedInstance()
-
-        println("Current audioRoute : \(auSession.currentRoute)")
-
-        if self.isHeadphonePluggedIn() {
-            println("setupAudioSession: On headphone, no need to override to speaker")
-            return
-        }
-
-        // Audio will play even if phone is set on silent, and is non mixable with other sounds. Will interrupt existing on going audio
-        auSession.setCategory(AVAudioSessionCategoryPlayAndRecord, withOptions: AVAudioSessionCategoryOptions.DefaultToSpeaker, error: &error)
-        if error != nil {
-            println("Error when setting up audio session")
-            println(error)
-        }
-
-        //  Signals are optimized for voice through system-supplied signal processing and sets AVAudioSessionCategoryOptionAllowBluetooth and AVAudioSessionCategoryOptionDefaultToSpeaker.
-        auSession.setMode(AVAudioSessionModeVoiceChat, error: &error)
-        if error != nil {
-            println("Error when setting up audio session")
-            println(error)
-        }
-
-
-        //  Tell other audio units to resume playing audio if they were interrupted with this call
-        auSession.setActive(true, withOptions: AVAudioSessionSetActiveOptions.OptionNotifyOthersOnDeactivation, error: &error)
-        if error != nil {
-            println("Error when setting up audio session")
-            println(error)
-        }
-
-        //  Lets route to speaker
-        auSession.overrideOutputAudioPort(AVAudioSessionPortOverride.Speaker, error: &error)
-        if error != nil {
-            println("Error when setting up audio session")
-            println(error)
-        } else {
-            println("We are on speaker!")
-        }
 
     }
 
@@ -506,41 +458,39 @@ class PhoneRTCPlugin : CDVPlugin {
         case AVAudioSessionRouteChangeReason.CategoryChange.hashValue:
             // Set speaker as default route
 
-            println("change audioRoute before: \(auSession.currentRoute)")
+            print("change audioRoute before: \(auSession.currentRoute)")
 
             if self.isHeadphonePluggedIn() {
-                println("On headphone, no need to override to speaker")
+                print("On headphone, no need to override to speaker")
                 return
             }
 
-            auSession.overrideOutputAudioPort(AVAudioSessionPortOverride.Speaker, error: &error)
             if error != nil {
-                println("Error when setting up audio session")
-                println(error)
+                print("Error when setting up audio session")
+                print(error)
             } else {
-                println("We are on speaker again!")
+                print("We are on speaker again!")
 
-                println("change audioRoute after: \(auSession.currentRoute)")
+                print("change audioRoute after: \(auSession.currentRoute)")
             }
 
             break
 
         case AVAudioSessionRouteChangeReason.NewDeviceAvailable.hashValue:
-            println("AVAudioSessionRouteChangeReasonNewDeviceAvailable");
-            println("Headphone/Line plugged in");
+            print("AVAudioSessionRouteChangeReasonNewDeviceAvailable");
+            print("Headphone/Line plugged in");
             break;
 
         case AVAudioSessionRouteChangeReason.OldDeviceUnavailable.hashValue:
-            println("AVAudioSessionRouteChangeReasonOldDeviceUnavailable");
-            println("Headphone/Line was pulled. switching to speaker....");
+            print("AVAudioSessionRouteChangeReasonOldDeviceUnavailable");
+            print("Headphone/Line was pulled. switching to speaker....");
 
-            auSession.overrideOutputAudioPort(AVAudioSessionPortOverride.Speaker, error: &error)
             if error != nil {
-                println("Error when setting up audio session")
-                println(error)
+                print("Error when setting up audio session")
+                print(error)
             } else {
-                println("We are on speaker again!")
-                println("change audioRoute after: \(auSession.currentRoute)")
+                print("We are on speaker again!")
+                print("change audioRoute after: \(auSession.currentRoute)")
             }
             break;
 
