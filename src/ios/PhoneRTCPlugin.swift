@@ -286,11 +286,12 @@ class PhoneRTCPlugin : CDVPlugin {
         if ( n == 0 || self.videoConfig!.isSafetyCam) {
 
             if self.localVideoView != nil {
+                // set rectangle for self video
                 self.localVideoView!.frame = CGRectMake(
                     CGFloat(self.videoConfig!.container.x),
-                    CGFloat(self.videoConfig!.container.y),
-                    CGFloat(self.videoConfig!.container.width),
-                    CGFloat(self.videoConfig!.container.height)
+                    CGFloat(self.videoConfig!.container.y*1),
+                    CGFloat(self.videoConfig!.container.width/3),
+                    CGFloat(self.videoConfig!.container.height/2)
                 )
             }
             return
@@ -406,7 +407,7 @@ class PhoneRTCPlugin : CDVPlugin {
 
             let currentFrame = self.localVideoView!.frame
 
-            if (currentFrame.width == CGFloat(self.videoConfig!.container.width)) {
+            if (currentFrame.width == CGFloat(self.videoConfig!.container.width/2)) {
                 return
             }
 
@@ -425,7 +426,7 @@ class PhoneRTCPlugin : CDVPlugin {
             let params = self.videoConfig!.local!
 
             let currentFrame = self.localVideoView!.frame
-            if (currentFrame.width == CGFloat(params.width)) {
+            if (currentFrame.width == CGFloat(params.width/2)) {
                 return
             }
             let translate = CGAffineTransformMakeTranslation (0 - CGFloat((self.videoConfig!.container.width - params.width)/2) + CGFloat(params.x) , 0 - CGFloat((self.videoConfig!.container.height - params.height)/2) + CGFloat(params.y))
@@ -444,8 +445,36 @@ class PhoneRTCPlugin : CDVPlugin {
     }
 
     func setupAudioSession () {
+        //  az added to override any audio conflict from other plugins
+        /*
+        https://developer.apple.com/library/ios/documentation/Audio/Conceptual/AudioSessionProgrammingGuide/AudioSessionBasics/AudioSessionBasics.html#//apple_ref/doc/uid/TP40007875-CH3-SW1
+        */
 
+        print("Setting up audio session")
+
+        var error : NSError?;
+        let auSession = AVAudioSession.sharedInstance()
+
+        print("Current audioRoute : \(auSession.currentRoute)")
+
+        if self.isHeadphonePluggedIn() {
+            print("setupAudioSession: On headphone, no need to override to speaker")
+            return
+        }
+
+        // Audio will play even if phone is set on silent, and is non mixable with other sounds. Will interrupt existing on going audio
+        try! auSession.setCategory(AVAudioSessionCategoryPlayAndRecord, withOptions: AVAudioSessionCategoryOptions.DefaultToSpeaker)
+
+        //  Signals are optimized for voice through system-supplied signal processing and sets AVAudioSessionCategoryOptionAllowBluetooth and AVAudioSessionCategoryOptionDefaultToSpeaker.
+        try! auSession.setMode(AVAudioSessionModeVoiceChat)
+
+        //  Tell other audio units to resume playing audio if they were interrupted with this call
+        // try! auSession.setActive(true, withOptions: AVAudioSessionSetActiveOptions.OptionNotifyOthersOnDeactivation)
+
+        //  Lets route to speaker
+        try! auSession.overrideOutputAudioPort(AVAudioSessionPortOverride.Speaker)
     }
+
 
     func audioRouteDidChange(notification: NSNotification) {
         var interuptionDict:NSDictionary = notification.userInfo!
@@ -465,13 +494,12 @@ class PhoneRTCPlugin : CDVPlugin {
                 return
             }
 
-            if error != nil {
+            do {
+            try! auSession.overrideOutputAudioPort(AVAudioSessionPortOverride.Speaker)
+            }
+            catch {
                 print("Error when setting up audio session")
                 print(error)
-            } else {
-                print("We are on speaker again!")
-
-                print("change audioRoute after: \(auSession.currentRoute)")
             }
 
             break
@@ -485,12 +513,12 @@ class PhoneRTCPlugin : CDVPlugin {
             print("AVAudioSessionRouteChangeReasonOldDeviceUnavailable");
             print("Headphone/Line was pulled. switching to speaker....");
 
-            if error != nil {
+            do {
+            try! auSession.overrideOutputAudioPort(AVAudioSessionPortOverride.Speaker)
+            }
+            catch {
                 print("Error when setting up audio session")
                 print(error)
-            } else {
-                print("We are on speaker again!")
-                print("change audioRoute after: \(auSession.currentRoute)")
             }
             break;
 
