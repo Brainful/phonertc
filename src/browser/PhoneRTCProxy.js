@@ -1,3 +1,7 @@
+var window = this.window;
+var document = this.document;
+var navigator = this.navigator;
+
 var PeerConnection = window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
 var IceCandidate = window.mozRTCIceCandidate || window.RTCIceCandidate;
 var SessionDescription = window.mozRTCSessionDescription || window.RTCSessionDescription;
